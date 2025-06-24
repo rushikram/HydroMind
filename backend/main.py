@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
-from backend.db import init_db, add_entry, get_history, reset_db
-from backend.models import WaterEntry
+from backend.db import init_db, add_entry, get_history, get_today_total, reset_user_data
+from backend.models import WaterEntry, ResetRequest
 from agent.hydration_agent import run_agent
 from datetime import datetime
 import time
@@ -50,6 +50,15 @@ def get_water_history(user_id: str):
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
+# Route to get today’s total water intake for a user
+@app.get("/today-total/{user_id}")
+def get_today_total_api(user_id: str):
+    try:
+        total = get_today_total(user_id)
+        return {"user_id": user_id, "today_total_ml": total}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
 # Route to query hydration AI agent
 @app.post("/ask-agent/")
 async def ask_agent(request: Request):
@@ -58,20 +67,19 @@ async def ask_agent(request: Request):
         question = body.get("question")
         groq_key = body.get("groq_key")
         goal_ml = body.get("goal_ml", 2000)
+        user_id = body.get("user_id")
 
-        if not question or not groq_key:
-            return {"response": "Missing question or API key."}
+        if not question or not groq_key or not user_id:
+            return {"response": "Missing question, user ID, or API key."}
 
-        response = run_agent(question, groq_key, goal_ml)
+        response = run_agent(question, groq_key, goal_ml, user_id)
         return {"response": response}
     except Exception as e:
         return {"response": f"An error occurred: {str(e)}"}
-
-# Route to manually reset hydration log
+# Route to manually reset hydration log for a user
 @app.post("/reset/")
-def reset_water_log():
+def reset_water_log(req: ResetRequest):
     try:
-        reset_db()
-        return {"status": "reset", "message": "Hydration log cleared."}
+        return reset_user_data(req.user_id)
     except Exception as e:
         return {"status": "error", "message": str(e)}

@@ -1,8 +1,8 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 class WaterEntry(BaseModel):
-    amount_ml: int = Field(..., gt=0, description="Amount of water in milliliters (must be > 0)")
+    user_id: str
+    amount_ml: int
 
-class UserQuery(BaseModel):
-    question: str = Field(..., min_length=3, description="Question for the AI hydration coach")
-
+class ResetRequest(BaseModel):
+    user_id: str
