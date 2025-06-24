@@ -49,13 +49,14 @@ st.subheader("📈 Hydration History")
 try:
     response = requests.get(f"{API_BASE}/history/{user_id}")
     if response.ok:
-        data = pd.DataFrame(response.json())
-        if not data.empty:
+        raw_data = response.json()
+        if raw_data:  # ✅ Prevent DataFrame error on empty list
+            data = pd.DataFrame(raw_data)
             data["timestamp"] = pd.to_datetime(data["timestamp"], errors="coerce")
             st.line_chart(data.set_index("timestamp")["amount_ml"])
             st.dataframe(data.rename(columns={"timestamp": "Time", "amount_ml": "Amount (ml)"}))
         else:
-            st.info("📭 No records yet.")
+            st.info("📭 No records yet. Start by logging your first entry.")
     else:
         st.error("❌ Failed to load data.")
 except Exception as e:
