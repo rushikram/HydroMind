@@ -32,21 +32,21 @@ def schedule_reminder(delay_minutes: int = 60):
     time.sleep(delay_minutes * 60)
     send_reminder()
 
-# Route to log water intake
+# Route to log water intake for a specific user
 @app.post("/add-entry/")
 def add_water_entry(entry: WaterEntry, background_tasks: BackgroundTasks):
     try:
-        result = add_entry(entry.amount_ml)
+        result = add_entry(entry.user_id, entry.amount_ml)
         background_tasks.add_task(schedule_reminder, delay_minutes=60)
         return result
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
-# Route to get water intake history
-@app.get("/history/")
-def get_water_history():
+# Route to get water intake history for a specific user
+@app.get("/history/{user_id}")
+def get_water_history(user_id: str):
     try:
-        return get_history()
+        return get_history(user_id)
     except Exception as e:
         return {"status": "error", "message": str(e)}
 

@@ -12,10 +12,11 @@ os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
 def init_db():
     with sqlite3.connect(DB_PATH) as conn:
         c = conn.cursor()
-        # Water intake log table
+        # Water intake log table with user_id
         c.execute("""
             CREATE TABLE IF NOT EXISTS water (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT NOT NULL,
                 amount_ml INTEGER NOT NULL,
                 timestamp TEXT NOT NULL
             )
@@ -42,30 +43,33 @@ def check_and_reset_if_new_day(conn):
         c.execute("INSERT OR REPLACE INTO metadata (key, value) VALUES ('last_date', ?)", (today,))
         conn.commit()
 
-def add_entry(amount_ml: int) -> dict:
+# Add a new water entry for a specific user
+def add_entry(user_id: str, amount_ml: int) -> dict:
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     with sqlite3.connect(DB_PATH) as conn:
         c = conn.cursor()
-        c.execute("INSERT INTO water (amount_ml, timestamp) VALUES (?, ?)", (amount_ml, now))
+        c.execute("INSERT INTO water (user_id, amount_ml, timestamp) VALUES (?, ?, ?)", (user_id, amount_ml, now))
         conn.commit()
-    return {"status": "success", "amount_ml": amount_ml, "timestamp": now}
+    return {"status": "success", "user_id": user_id, "amount_ml": amount_ml, "timestamp": now}
 
-def get_history() -> list:
+# Get full history for a specific user
+def get_history(user_id: str) -> list:
     with sqlite3.connect(DB_PATH) as conn:
         c = conn.cursor()
-        c.execute("SELECT amount_ml, timestamp FROM water ORDER BY timestamp ASC")
+        c.execute("SELECT amount_ml, timestamp FROM water WHERE user_id = ? ORDER BY timestamp ASC", (user_id,))
         rows = c.fetchall()
     return [{"amount_ml": row[0], "timestamp": row[1]} for row in rows]
 
-def get_today_total() -> int:
+# Get today’s total intake for a user
+def get_today_total(user_id: str) -> int:
     today = datetime.now().strftime("%Y-%m-%d")
     with sqlite3.connect(DB_PATH) as conn:
         c = conn.cursor()
-        c.execute("SELECT SUM(amount_ml) FROM water WHERE DATE(timestamp) = ?", (today,))
+        c.execute("SELECT SUM(amount_ml) FROM water WHERE user_id = ? AND DATE(timestamp) = ?", (user_id, today))
         result = c.fetchone()[0]
     return result if result is not None else 0
 
-# 🔄 Manual reset from API/Streamlit
+# Manual reset from API/Streamlit
 def reset_db():
     with sqlite3.connect(DB_PATH) as conn:
         c = conn.cursor()

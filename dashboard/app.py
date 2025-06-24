@@ -9,6 +9,10 @@ st.set_page_config(page_title="HydroMind", layout="centered", page_icon="💧")
 st.title("💧 HydroMind: Your AI Hydration Coach")
 
 st.sidebar.title("⚙️ Preferences")
+
+# NEW: User ID input
+user_id = st.sidebar.text_input("Enter your name or user ID", value="guest")
+
 user_goal = st.sidebar.number_input("Set your daily goal (ml)", min_value=500, step=100, value=2000)
 groq_key = st.sidebar.text_input("Enter your Groq API key", type="password")
 
@@ -30,7 +34,8 @@ with st.form("log_form"):
     submitted = st.form_submit_button("Add Entry")
     if submitted:
         try:
-            response = requests.post(f"{API_BASE}/add-entry/", json={"amount_ml": amount})
+            payload = {"user_id": user_id, "amount_ml": amount}
+            response = requests.post(f"{API_BASE}/add-entry/", json=payload)
             if response.status_code == 200:
                 st.success("✅ Water logged successfully!")
                 st.rerun()
@@ -42,12 +47,13 @@ with st.form("log_form"):
 # History chart
 st.subheader("📈 Hydration History")
 try:
-    response = requests.get(f"{API_BASE}/history/")
+    response = requests.get(f"{API_BASE}/history/{user_id}")
     if response.ok:
         data = pd.DataFrame(response.json())
         if not data.empty:
             data["timestamp"] = pd.to_datetime(data["timestamp"], errors="coerce")
             st.line_chart(data.set_index("timestamp")["amount_ml"])
+            st.dataframe(data.rename(columns={"timestamp": "Time", "amount_ml": "Amount (ml)"}))
         else:
             st.info("📭 No records yet.")
     else:
