@@ -1,4 +1,4 @@
-# 💧 Hydration Tracker Agent
+# 💧 Hydration Tracker Agent(HydroMind)
 
 <div align="center">
 
