@@ -16,7 +16,9 @@
 
 ## 📋 Project Overview
 
-This is an **intelligent hydration tracking system** that uses **LangChain agents** and **Groq AI** to help users monitor their daily water intake. The system provides personalized recommendations and real-time feedback based on individual hydration goals.
+HydroMind is an agentic AI–powered hydration tracking system that leverages LangChain agents and Groq’s ultra-fast LLMs to deliver personalized, real-time hydration coaching. Unlike traditional static apps, HydroMind acts as an autonomous AI agent that perceives user behavior, reasons over their hydration data, and proactively responds with tailored suggestions and actionable feedback.
+
+
 
 ### 🎯 **Key Problem Solved**
 - Manual water intake tracking is tedious and often forgotten
@@ -30,7 +32,7 @@ This is an **intelligent hydration tracking system** that uses **LangChain agent
 
 ---
 
-## 🛠️ Technical Architecture
+## 🛠️ Technical Architecture of Agentic-AI
 
 ```
 User Request → LangChain Agent → Custom Tools → Database → AI Response
