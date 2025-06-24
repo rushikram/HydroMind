@@ -13,7 +13,7 @@ def init_db():
     """Initializes the hydration database and tables if they do not exist."""
     with sqlite3.connect(DB_PATH) as conn:
         c = conn.cursor()
-        # Water intake table: tracks per user
+        # Water intake log table per user
         c.execute("""
             CREATE TABLE IF NOT EXISTS water (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -22,7 +22,7 @@ def init_db():
                 timestamp TEXT NOT NULL
             )
         """)
-        # Metadata: tracks global last reset
+        # Metadata table for global reset tracking
         c.execute("""
             CREATE TABLE IF NOT EXISTS metadata (
                 key TEXT PRIMARY KEY,
@@ -34,7 +34,7 @@ def init_db():
 
 
 def check_and_reset_if_new_day(conn):
-    """Global reset: clears all data if a new calendar day has started."""
+    """Checks date and resets water log if a new day has started (global reset)."""
     today = datetime.now().strftime("%Y-%m-%d")
     c = conn.cursor()
     c.execute("SELECT value FROM metadata WHERE key = 'last_date'")
@@ -95,5 +95,5 @@ def reset_user_data(user_id: str) -> dict:
     return {"status": "success", "message": f"Hydration log cleared for user: {user_id}"}
 
 
-# Initialize the DB when this module is imported
+# Automatically initialize DB when this module is imported
 init_db()

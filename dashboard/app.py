@@ -56,13 +56,15 @@ if user_id:
     st.subheader("📊 Today’s Total")
     try:
         res = requests.get(f"{API_BASE}/today-total/{user_id}")
-        if res.ok:
-            total = res.json()["today_total_ml"]
+        res_data = res.json()  # ✅ capture response once
+        if res.ok and "today_total_ml" in res_data:
+            total = res_data["today_total_ml"]
             st.metric(label="💧 Total Today", value=f"{total} ml", delta=f"{user_goal - total} ml left")
         else:
-            st.warning("⚠️ Could not fetch total intake.")
+            st.warning(f"⚠️ Could not fetch total intake. Server said: {res_data.get('message', 'Unknown error')}")
     except Exception as e:
         st.warning(f"⚠️ Error fetching total: {e}")
+
 
 # Hydration history chart
 st.subheader("📈 Hydration History")
@@ -71,17 +73,19 @@ if not user_id:
 else:
     try:
         response = requests.get(f"{API_BASE}/history/{user_id}")
-        if response.ok:
-            data = pd.DataFrame(response.json())
-            if not data.empty:
+        data_json = response.json()
+        if response.ok and isinstance(data_json, list):
+            if len(data_json) > 0:
+                data = pd.DataFrame(data_json)
                 data["timestamp"] = pd.to_datetime(data["timestamp"], errors="coerce")
                 st.line_chart(data.set_index("timestamp")["amount_ml"])
             else:
                 st.info("📭 No hydration entries yet.")
         else:
-            st.error("❌ Failed to load history.")
+            st.warning("⚠️ Unexpected data format received.")
     except Exception as e:
         st.error(f"🚫 Error loading history: {e}")
+
 
 # Ask hydration AI
 st.subheader("🤖 Ask Your Hydration Coach")

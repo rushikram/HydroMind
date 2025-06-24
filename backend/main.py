@@ -24,7 +24,7 @@ def startup_event():
     print("🔧 Initializing database...")
     init_db()
 
-# Background reminder function
+# Background reminder
 def send_reminder():
     print(f"[Reminder] Time to hydrate! — {datetime.now().strftime('%H:%M:%S')}")
 
@@ -32,7 +32,7 @@ def schedule_reminder(delay_minutes: int = 60):
     time.sleep(delay_minutes * 60)
     send_reminder()
 
-# Route to log water intake for a specific user
+# ✅ Add water entry
 @app.post("/add-entry/")
 def add_water_entry(entry: WaterEntry, background_tasks: BackgroundTasks):
     try:
@@ -40,26 +40,30 @@ def add_water_entry(entry: WaterEntry, background_tasks: BackgroundTasks):
         background_tasks.add_task(schedule_reminder, delay_minutes=60)
         return result
     except Exception as e:
+        print(f"[ERROR] add_entry failed: {e}")
         return {"status": "error", "message": str(e)}
 
-# Route to get water intake history for a specific user
+# ✅ Get hydration history
 @app.get("/history/{user_id}")
 def get_water_history(user_id: str):
     try:
-        return get_history(user_id)
+        history = get_history(user_id)
+        return history  # List of {amount_ml, timestamp}
     except Exception as e:
+        print(f"[ERROR] get_history failed for {user_id}: {e}")
         return {"status": "error", "message": str(e)}
 
-# Route to get today’s total water intake for a user
+# ✅ Get today's total intake
 @app.get("/today-total/{user_id}")
 def get_today_total_api(user_id: str):
     try:
         total = get_today_total(user_id)
         return {"user_id": user_id, "today_total_ml": total}
     except Exception as e:
+        print(f"[ERROR] get_today_total failed for {user_id}: {e}")
         return {"status": "error", "message": str(e)}
 
-# Route to query hydration AI agent
+# ✅ Ask hydration AI agent
 @app.post("/ask-agent/")
 async def ask_agent(request: Request):
     try:
@@ -75,11 +79,14 @@ async def ask_agent(request: Request):
         response = run_agent(question, groq_key, goal_ml, user_id)
         return {"response": response}
     except Exception as e:
+        print(f"[ERROR] ask-agent failed: {e}")
         return {"response": f"An error occurred: {str(e)}"}
-# Route to manually reset hydration log for a user
+
+# ✅ Reset hydration log for user
 @app.post("/reset/")
 def reset_water_log(req: ResetRequest):
     try:
         return reset_user_data(req.user_id)
     except Exception as e:
+        print(f"[ERROR] reset_user_data failed: {e}")
         return {"status": "error", "message": str(e)}
