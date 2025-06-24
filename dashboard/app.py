@@ -2,6 +2,9 @@ import streamlit as st
 import requests
 import pandas as pd
 
+# 🌐 Use your deployed FastAPI Render URL
+API_BASE = "https://hydromind.onrender.com"
+
 st.set_page_config(page_title="HydroMind", layout="centered", page_icon="💧")
 st.title("💧 HydroMind: Your AI Hydration Coach")
 
@@ -12,7 +15,7 @@ groq_key = st.sidebar.text_input("Enter your Groq API key", type="password")
 # DB reset button
 if st.sidebar.button("🔄 Reset Today's Log"):
     try:
-        r = requests.post("http://localhost:8000/reset/")
+        r = requests.post(f"{API_BASE}/reset/")
         if r.status_code == 200:
             st.success("✅ Log reset for today.")
             st.rerun()
@@ -27,7 +30,7 @@ with st.form("log_form"):
     submitted = st.form_submit_button("Add Entry")
     if submitted:
         try:
-            response = requests.post("http://localhost:8000/add-entry/", json={"amount_ml": amount})
+            response = requests.post(f"{API_BASE}/add-entry/", json={"amount_ml": amount})
             if response.status_code == 200:
                 st.success("✅ Water logged successfully!")
                 st.rerun()
@@ -39,7 +42,7 @@ with st.form("log_form"):
 # History chart
 st.subheader("📈 Hydration History")
 try:
-    response = requests.get("http://localhost:8000/history/")
+    response = requests.get(f"{API_BASE}/history/")
     if response.ok:
         data = pd.DataFrame(response.json())
         if not data.empty:
@@ -62,7 +65,7 @@ if st.button("Ask"):
         try:
             full_prompt = f"{question.strip()} (Today’s hydration goal: {user_goal} ml)"
             response = requests.post(
-                "http://localhost:8000/ask-agent/",
+                f"{API_BASE}/ask-agent/",
                 json={"question": full_prompt, "groq_key": groq_key, "goal_ml": user_goal}
             )
             if response.ok:
