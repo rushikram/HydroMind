@@ -3,7 +3,8 @@ from langchain.agents.agent_types import AgentType
 from langchain_groq import ChatGroq
 from agent.tools import get_tools
 
-def run_agent(user_input: str, api_key: str, goal_ml: int) -> str:
+def run_agent(user_input: str, api_key: str, goal_ml: int, user_id: str) -> str:
+
     """
     Executes a hydration assistant agent using LangChain + Groq LLaMA model.
 
