@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+streamlit
+langchain
+openai
+pydantic
+requests
+langchain_groq
+langchain_community
+
+

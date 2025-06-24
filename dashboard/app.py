@@ -1,0 +1,73 @@
+import streamlit as st
+import requests
+import pandas as pd
+
+st.set_page_config(page_title="HydroMind", layout="centered", page_icon="💧")
+st.title("💧 HydroMind: Your AI Hydration Coach")
+
+st.sidebar.title("⚙️ Preferences")
+user_goal = st.sidebar.number_input("Set your daily goal (ml)", min_value=500, step=100, value=2000)
+groq_key = st.sidebar.text_input("Enter your Groq API key", type="password")
+
+# DB reset button
+if st.sidebar.button("🔄 Reset Today's Log"):
+    try:
+        r = requests.post("http://localhost:8000/reset/")
+        if r.status_code == 200:
+            st.success("✅ Log reset for today.")
+            st.rerun()
+        else:
+            st.error("❌ Failed to reset log.")
+    except Exception as e:
+        st.error(f"🚫 Reset failed: {e}")
+
+# Log form
+with st.form("log_form"):
+    amount = st.number_input("Water Intake (ml)", min_value=50, step=50)
+    submitted = st.form_submit_button("Add Entry")
+    if submitted:
+        try:
+            response = requests.post("http://localhost:8000/add-entry/", json={"amount_ml": amount})
+            if response.status_code == 200:
+                st.success("✅ Water logged successfully!")
+                st.rerun()
+            else:
+                st.error(f"❌ Failed to log water: {response.status_code}")
+        except Exception as e:
+            st.error(f"🚫 Request error: {e}")
+
+# History chart
+st.subheader("📈 Hydration History")
+try:
+    response = requests.get("http://localhost:8000/history/")
+    if response.ok:
+        data = pd.DataFrame(response.json())
+        if not data.empty:
+            data["timestamp"] = pd.to_datetime(data["timestamp"], errors="coerce")
+            st.line_chart(data.set_index("timestamp")["amount_ml"])
+        else:
+            st.info("📭 No records yet.")
+    else:
+        st.error("❌ Failed to load data.")
+except Exception as e:
+    st.error(f"🚫 Error loading history: {e}")
+
+# Ask AI
+st.subheader("🤖 Ask Your Hydration Coach")
+question = st.text_input("Ask something like: 'Did I drink enough today?'")
+if st.button("Ask"):
+    if not groq_key:
+        st.warning("⚠️ Please enter your Groq API key.")
+    else:
+        try:
+            full_prompt = f"{question.strip()} (Today’s hydration goal: {user_goal} ml)"
+            response = requests.post(
+                "http://localhost:8000/ask-agent/",
+                json={"question": full_prompt, "groq_key": groq_key, "goal_ml": user_goal}
+            )
+            if response.ok:
+                st.markdown(f"**🧠 Coach says:** {response.json().get('response')}")
+            else:
+                st.error(f"❌ Error: {response.status_code}")
+        except Exception as e:
+            st.error(f"🚫 Error talking to agent: {e}")
