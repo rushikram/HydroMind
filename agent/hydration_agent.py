@@ -21,7 +21,7 @@ def run_agent(user_input: str, api_key: str, goal_ml: int, user_id: str) -> str:
         llm = ChatGroq(api_key=api_key, model_name="llama3-70b-8192")
 
         # Load hydration tools with goal
-        tools = get_tools(goal_ml)
+        tools = get_tools(goal_ml,user_id)
 
         # Initialize the LangChain agent
         agent = initialize_agent(
